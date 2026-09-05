@@ -1,7 +1,6 @@
 // ===== Supabase 配置 =====
 const SUPABASE_URL = 'https://szeedpcuharbupkjrnob.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN6ZWVkcGN1aGFyYnVwa2pybm9iIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI1NTY3MDAsImV4cCI6MjA4ODEzMjcwMH0.7Qhchq8-NJG_Yqpx40r2idwt9iN98Hg63cHWIZ8lMTY';
-
 let supabaseClient;
 try {
   supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -9,7 +8,6 @@ try {
 } catch(e) {
   console.error('❌ Supabase 初始化失败:', e);
 }
-
 // ===== 全局状态 =====
 let currentFilter = 'all';
 let currentSearch = '';
@@ -18,7 +16,6 @@ const gamesPerPage = 16;
 let lastClickedCard = null;
 let currentUser = null;
 let currentUserProfile = null;
-
 // ===== DOM =====
 const gamesGrid = document.getElementById('gamesGrid');
 const tagsContainer = document.getElementById('tagsContainer');
@@ -35,16 +32,13 @@ const changePwdOverlay = document.getElementById('changePwdOverlay');
 const memberOverlay = document.getElementById('memberOverlay');
 const vipOverlay = document.getElementById('vipOverlay');
 const orderOverlay = document.getElementById('orderOverlay');
-
 // ===== 粒子 =====
 const particleCanvas = document.getElementById('particleCanvas');
 const ctx = particleCanvas.getContext('2d');
 let particles = [];
 let animId;
 let mouseX = -1000, mouseY = -1000;
-
 function resizeParticles() { particleCanvas.width = innerWidth; particleCanvas.height = innerHeight; }
-
 class Particle {
   constructor() { this.reset(true); }
   reset(init) {
@@ -66,7 +60,6 @@ class Particle {
 }
 function initParticles(){ const c=Math.floor(particleCanvas.width*particleCanvas.height/15000); particles=Array.from({length:Math.min(c,150)},()=>new Particle()); }
 function animateParticles(){ ctx.clearRect(0,0,particleCanvas.width,particleCanvas.height); particles.forEach(p=>{p.update();p.draw();}); animId=requestAnimationFrame(animateParticles); }
-
 // ===== Toast 弹窗 =====
 function showToast(msg, type = 'info') {
   const container = document.getElementById('toastContainer');
@@ -101,7 +94,6 @@ function showToast(msg, type = 'info') {
     }, 300);
   }, 3000);
 }
-
 // ===== 抖动动画（让表单震动提示） =====
 function shakeForm(formElement) {
   if (!formElement) return;
@@ -113,7 +105,6 @@ function shakeForm(formElement) {
     formElement.style.animation = '';
   }, 600);
 }
-
 // ===== 弹窗控制 =====
 function openAuth() { authOverlay.classList.add('active'); }
 function closeAuth() { authOverlay.classList.remove('active'); }
@@ -127,7 +118,6 @@ function openVIPModal() { closeMemberModal(); vipOverlay.classList.add('active')
 function closeVIPModal() { vipOverlay.classList.remove('active'); }
 function openOrderModal() { closeVIPModal(); orderOverlay.classList.add('active'); document.getElementById('orderNumber').value=''; updateOrderDots(); }
 function closeOrderModal() { orderOverlay.classList.remove('active'); }
-
 function switchToRegisterView() {
   document.getElementById('tabLogin').classList.remove('active');
   document.getElementById('tabRegister').classList.add('active');
@@ -136,7 +126,6 @@ function switchToRegisterView() {
   document.getElementById('loginForm').reset();
   document.querySelectorAll('.auth-input').forEach(el => el.classList.remove('error', 'success'));
 }
-
 function switchToLoginView() {
   document.getElementById('tabRegister').classList.remove('active');
   document.getElementById('tabLogin').classList.add('active');
@@ -146,17 +135,14 @@ function switchToLoginView() {
   document.querySelectorAll('.auth-input').forEach(el => el.classList.remove('error', 'success'));
   document.getElementById('passwordStrength').style.display = 'none';
 }
-
 // ===== 工具函数 =====
 function isValidEmail(email) {
   const re = /^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$/;
   return re.test(email);
 }
-
 function isStrongPassword(password) {
   return /[a-zA-Z]/.test(password) && /\d/.test(password) && password.length >= 6;
 }
-
 function getPasswordStrength(password) {
   let score = 0;
   if (password.length >= 6) score++;
@@ -166,19 +152,16 @@ function getPasswordStrength(password) {
   if (/[^a-zA-Z0-9]/.test(password)) score++;
   return score;
 }
-
 function getTodayDateStr() {
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 }
-
 // ===== 密码强度指示器 =====
 function setupPasswordStrength(inputId, indicatorId, strengthId) {
   const input = document.getElementById(inputId);
   const container = document.getElementById(indicatorId);
   const indicator = document.getElementById(strengthId);
   if (!input || !container || !indicator) return;
-
   input.addEventListener('input', function() {
     const val = this.value;
     if (!val) { container.style.display = 'none'; return; }
@@ -198,7 +181,6 @@ function setupPasswordStrength(inputId, indicatorId, strengthId) {
     }
   });
 }
-
 // ===== 非会员下载限制检查 =====
 function checkDownloadAccess(gameId) {
   if(!currentUser){ 
@@ -207,31 +189,25 @@ function checkDownloadAccess(gameId) {
     return false; 
   }
   if(currentUserProfile?.is_member) return true;
-
   const today = getTodayDateStr();
   const storageKey = `download_limit_${currentUser.id}`;
   const saved = JSON.parse(localStorage.getItem(storageKey) || '{"date":"","gameId":null}');
-
   if(saved.date !== today) {
     saved.date = today;
     saved.gameId = null;
     localStorage.setItem(storageKey, JSON.stringify(saved));
   }
-
   if(saved.gameId === null) {
     saved.gameId = gameId;
     localStorage.setItem(storageKey, JSON.stringify(saved));
     return true;
   }
-
   if(saved.gameId === gameId) {
     return true;
   }
-
   openMemberModal();
   return false;
 }
-
 // ===== 认证 =====
 async function checkAuthStatus() {
   if (!supabaseClient) { 
@@ -255,7 +231,6 @@ async function checkAuthStatus() {
     updateAuthUI();
   }
 }
-
 async function fetchUserProfile() {
   if (!currentUser || !supabaseClient) return;
   try {
@@ -264,7 +239,6 @@ async function fetchUserProfile() {
     else currentUserProfile = { is_member: false };
   } catch(e) { currentUserProfile = { is_member: false }; }
 }
-
 // ============================================================
 // ===== 登录（完整错误处理 + Toast 提示） =====
 // ============================================================
@@ -347,7 +321,6 @@ async function handleLogin(e) {
     submitBtn.textContent = origText;
   }
 }
-
 // ============================================================
 // ===== 注册（完整错误处理 + Toast 提示） =====
 // ============================================================
@@ -466,7 +439,6 @@ async function handleRegister(e) {
     submitBtn.textContent = origText;
   }
 }
-
 // ============================================================
 // ===== 忘记密码（完整错误处理 + Toast 提示） =====
 // ============================================================
@@ -529,7 +501,6 @@ async function handleForgotPassword(e) {
     submitBtn.textContent = origText;
   }
 }
-
 // ============================================================
 // ===== 修改密码（完整错误处理 + Toast 提示） =====
 // ============================================================
@@ -601,7 +572,6 @@ async function handleChangePassword(e) {
     submitBtn.textContent = origText;
   }
 }
-
 // ===== 登出 =====
 async function handleLogout() {
   if (supabaseClient) await supabaseClient.auth.signOut();
@@ -610,7 +580,6 @@ async function handleLogout() {
   updateAuthUI();
   showToast('👋 已退出登录', 'info');
 }
-
 // ===== 订单 =====
 function updateOrderDots() {
   const input = document.getElementById('orderNumber');
@@ -623,7 +592,6 @@ function updateOrderDots() {
   });
   document.getElementById('submitOrder').disabled = len !== 32;
 }
-
 async function submitOrder() {
   const orderNo = document.getElementById('orderNumber').value;
   if(orderNo.length !== 32){ 
@@ -648,7 +616,6 @@ async function submitOrder() {
     showToast('❌ 验证失败: ' + e.message, 'error'); 
   }
 }
-
 // ===== UI =====
 function updateAuthUI() {
   const section = document.getElementById('auth-section');
@@ -677,14 +644,12 @@ function updateAuthUI() {
     document.getElementById('login-btn').addEventListener('click', openAuth);
   }
 }
-
 // ===== 渲染 =====
 function renderTags() {
   tagsContainer.innerHTML = gameTypes.map(type => `
     <div class="tag ${type.id==='all'?'active':''}" data-type="${type.id}">${type.label}</div>
   `).join('');
 }
-
 function getFilteredGames() {
   let filtered = [...gamesData];
   if(currentFilter!=='all') filtered = filtered.filter(g=>g.type===currentFilter);
@@ -694,16 +659,15 @@ function getFilteredGames() {
   }
   return filtered;
 }
-
 function renderPage() {
   const filtered = getFilteredGames();
   const totalPages = Math.ceil(filtered.length / gamesPerPage);
   if(currentPage > totalPages) currentPage = Math.max(1, totalPages);
   const start = (currentPage - 1) * gamesPerPage;
-  const pageGames = filtered.slice(start, start + gamesPerPage);
-
+  // 关键改动：拷贝数组再反转，不修改源数据
+  const pageGames = [...filtered].reverse().slice(start, start + gamesPerPage);
+  
   totalCount.textContent = `共 ${filtered.length} 款`;
-
   if(pageGames.length === 0) {
     gamesGrid.innerHTML = '';
     emptyState.style.display = 'block';
@@ -721,7 +685,6 @@ function renderPage() {
         </div>
       </div>
     `).join('');
-
     document.querySelectorAll('.game-card').forEach(card => {
       card.addEventListener('click', () => {
         const game = gamesData.find(g=>g.id===parseInt(card.dataset.id));
@@ -759,13 +722,11 @@ function renderPagination(totalPages) {
     });
   });
 }
-
 // ===== 详情弹窗 =====
 function getCardOrigin(card) {
   const rect = card.getBoundingClientRect();
   return { x: rect.left+rect.width/2-innerWidth/2, y: rect.top+rect.height/2-innerHeight/2 };
 }
-
 function openModal(game, card) {
   lastClickedCard = card;
   document.getElementById('modalCover').src = game.cover;
@@ -780,10 +741,22 @@ function openModal(game, card) {
     </div>
   `).join('');
   row.scrollLeft = 0;
-  document.getElementById('downloadLink').href = game.quarkLink;
+
+  // ========== 修改点：自动识别迅雷/夸克链接，修改下载按钮 ==========
+  const downloadLinkEl = document.getElementById('downloadLink');
+  if(game.thunderLink){
+    downloadLinkEl.href = game.thunderLink;
+    downloadLinkEl.innerHTML = `<span>☁️</span><span>迅雷网盘下载</span>`;
+  }else if(game.quarkLink){
+    downloadLinkEl.href = game.quarkLink;
+    downloadLinkEl.innerHTML = `<span>☁️</span><span>夸克网盘下载</span>`;
+  }else{
+    downloadLinkEl.href = "#";
+    downloadLinkEl.innerHTML = `<span>⚠️</span><span>暂无下载链接</span>`;
+  }
+
   modalOverlay.classList.add('active');
   document.body.style.overflow = 'hidden';
-
   const origin = getCardOrigin(card);
   const keyframes = [
     { transform: `translate(${origin.x}px,${origin.y}px) scale(0.2)`, opacity:0, borderRadius:'30px' },
@@ -793,7 +766,6 @@ function openModal(game, card) {
   ];
   modalContent.animate(keyframes, { duration:600, easing:'cubic-bezier(0.22,0.61,0.36,1)', fill:'forwards' });
 }
-
 function closeModal() {
   let origin = { x:0, y:0 };
   if(lastClickedCard) origin = getCardOrigin(lastClickedCard);
@@ -805,7 +777,6 @@ function closeModal() {
   const anim = modalContent.animate(keyframes, { duration:450, easing:'cubic-bezier(0.55,0.06,0.68,0.19)', fill:'forwards' });
   anim.onfinish = () => { modalOverlay.classList.remove('active'); document.body.style.overflow=''; };
 }
-
 // ===== 输入框实时验证 =====
 function setupInputValidation() {
   document.querySelectorAll('.auth-input').forEach(input => {
@@ -846,7 +817,6 @@ function setupInputValidation() {
     });
   });
 }
-
 // ===== 事件 =====
 function setupEvents() {
   tagsContainer.addEventListener('click', e => {
@@ -856,14 +826,11 @@ function setupEvents() {
   });
   searchBtn.addEventListener('click', ()=>{ currentSearch=searchInput.value; currentPage=1; renderPage(); });
   searchInput.addEventListener('keypress', e=>{ if(e.key==='Enter'){ currentSearch=searchInput.value; currentPage=1; renderPage(); } });
-
   document.getElementById('modalClose').addEventListener('click', closeModal);
   modalOverlay.addEventListener('click', e=>{ if(e.target===modalOverlay) closeModal(); });
   document.addEventListener('keydown', e=>{ if(e.key==='Escape' && modalOverlay.classList.contains('active')) closeModal(); });
-
   document.getElementById('sliderPrev').addEventListener('click', ()=>{ document.getElementById('modalScreenshots').scrollBy({left:-185,behavior:'smooth'}); });
   document.getElementById('sliderNext').addEventListener('click', ()=>{ document.getElementById('modalScreenshots').scrollBy({left:185,behavior:'smooth'}); });
-
   // 截图放大
   document.addEventListener('click', e => {
     const thumb = e.target.closest('.screenshot-thumb'); if(!thumb) return;
@@ -871,7 +838,6 @@ function setupEvents() {
     const game = gamesData.find(g=>g.id===gameId); if(!game) return;
     const screenshots = game.screenshots;
     let zoomIdx = idx;
-
     const overlay = document.createElement('div'); overlay.className='img-zoom-overlay';
     const closeBtn = document.createElement('button'); closeBtn.className='zoom-close-btn'; closeBtn.innerHTML='✕';
     closeBtn.addEventListener('click', ev=>{ ev.stopPropagation(); closeZoom(); });
@@ -884,7 +850,6 @@ function setupEvents() {
     wrapper.appendChild(prevBtn); wrapper.appendChild(img); wrapper.appendChild(nextBtn);
     overlay.appendChild(closeBtn); overlay.appendChild(wrapper);
     document.body.appendChild(overlay); document.body.style.overflow='hidden';
-
     function handleKey(e){
       if(e.key==='ArrowLeft'){ zoomIdx=(zoomIdx-1+screenshots.length)%screenshots.length; img.src=screenshots[zoomIdx]; }
       else if(e.key==='ArrowRight'){ zoomIdx=(zoomIdx+1)%screenshots.length; img.src=screenshots[zoomIdx]; }
@@ -897,7 +862,6 @@ function setupEvents() {
     }
     overlay.addEventListener('click', ev=>{ if(ev.target===overlay) closeZoom(); });
   });
-
   // ===== 登录弹窗事件 =====
   document.getElementById('authClose').addEventListener('click', closeAuth);
   authOverlay.addEventListener('click', e=>{ if(e.target===authOverlay) closeAuth(); });
@@ -907,7 +871,6 @@ function setupEvents() {
   document.getElementById('switchToLogin').addEventListener('click', switchToLoginView);
   document.getElementById('loginForm').addEventListener('submit', handleLogin);
   document.getElementById('registerForm').addEventListener('submit', handleRegister);
-
   // ===== 忘记密码事件 =====
   document.getElementById('forgotPasswordLink').addEventListener('click', e => {
     e.preventDefault();
@@ -930,23 +893,19 @@ function setupEvents() {
       showToast('✅ 微信号: GameTogether1', 'success');
     });
   });
-
   // ===== 修改密码事件 =====
   document.getElementById('changePwdClose').addEventListener('click', closeChangePwd);
   changePwdOverlay.addEventListener('click', e=>{ if(e.target===changePwdOverlay) closeChangePwd(); });
   document.getElementById('changePwdForm').addEventListener('submit', handleChangePassword);
-
   // ===== 会员弹窗事件 =====
   document.getElementById('memberClose').addEventListener('click', closeMemberModal);
   memberOverlay.addEventListener('click', e=>{ if(e.target===memberOverlay) closeMemberModal(); });
   document.getElementById('gotoVipBtn').addEventListener('click', openVIPModal);
   document.getElementById('cancelMemberBtn').addEventListener('click', closeMemberModal);
-
   // ===== VIP开通事件 =====
   document.getElementById('vipClose').addEventListener('click', closeVIPModal);
   vipOverlay.addEventListener('click', e=>{ if(e.target===vipOverlay) closeVIPModal(); });
   document.getElementById('paidBtn').addEventListener('click', openOrderModal);
-
   // ===== 订单事件 =====
   document.getElementById('cancelOrder').addEventListener('click', closeOrderModal);
   const orderInput = document.getElementById('orderNumber');
@@ -955,7 +914,6 @@ function setupEvents() {
     updateOrderDots();
   });
   document.getElementById('submitOrder').addEventListener('click', submitOrder);
-
   // ===== 输入验证 =====
   setupInputValidation();
   
@@ -963,7 +921,6 @@ function setupEvents() {
   setupPasswordStrength('registerPassword', 'passwordStrength', 'strengthIndicator');
   setupPasswordStrength('newPassword', 'changePwdStrength', 'changeStrengthIndicator');
 }
-
 // ===== 启动 =====
 async function init() {
   resizeParticles(); 
@@ -975,7 +932,6 @@ async function init() {
   setupEvents();
   console.log('✅ 网站初始化完成');
 }
-
 window.addEventListener('resize', ()=>{ resizeParticles(); initParticles(); });
 document.addEventListener('mousemove', e=>{ mouseX=e.clientX; mouseY=e.clientY; });
 document.addEventListener('mouseleave', ()=>{ mouseX=-1000; mouseY=-1000; });
