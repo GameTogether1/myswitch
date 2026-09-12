@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>一块Switch 游戏库</title>
+  <title>一块游戏 Switch 游戏库</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -12,9 +12,7 @@
     <div class="joycon-glow joycon-blue"></div>
     <div class="joycon-glow joycon-white"></div>
   </div>
-
   <canvas id="particleCanvas"></canvas>
-
   <!-- 导航栏 -->
   <nav class="navbar">
     <div class="nav-inner">
@@ -27,11 +25,9 @@
       </div>
     </div>
   </nav>
-
   <header class="header">
     <h1 class="header-title">精选任天堂 Switch 游戏资源</h1>
     <p class="header-sub">探索 · 下载 · 畅玩</p>
-
     <div class="search-wrap">
       <div class="search-box">
         <input type="text" class="search-input" id="searchInput" placeholder="搜索游戏名称..." autocomplete="off">
@@ -39,9 +35,7 @@
       </div>
     </div>
   </header>
-
   <div class="tags-wrap" id="tagsContainer"></div>
-
   <section class="games-section">
     <div class="section-info">
       <span class="section-label">游戏列表</span>
@@ -53,10 +47,8 @@
       <div class="empty-state-text">未找到相关游戏</div>
     </div>
   </section>
-
   <!-- 分页 -->
   <div class="pagination" id="pagination"></div>
-
   <!-- 详情弹窗 -->
   <div class="modal-overlay" id="modalOverlay">
     <div class="modal-content" id="modalContent">
@@ -81,15 +73,11 @@
           </div>
         </div>
         <div class="modal-actions">
-          <a class="btn btn-primary" id="downloadLink" href="#" target="_blank">
-            <span>☁️</span>
-            <span>夸克网盘下载</span>
-          </a>
+          <!-- 下载按钮由JS动态生成，此处清空 -->
         </div>
       </div>
     </div>
   </div>
-
   <!-- 登录弹窗 -->
   <div class="auth-overlay" id="authOverlay">
     <div class="auth-modal" id="authModal">
@@ -115,11 +103,10 @@
         </div>
         <input type="password" id="registerConfirm" placeholder="确认密码" class="auth-input" required>
         <button type="submit" class="auth-submit" id="registerSubmit">注册</button>
-        <p class="auth-switch">已有账号？<span id="switchToLogin">立即登录</span></p>
+        <p class="auth-switch">已有账号？<span id="switchToLogin">立即注册</span></p>
       </form>
     </div>
   </div>
-
   <!-- 忘记密码弹窗 -->
   <div class="forgot-overlay" id="forgotOverlay">
     <div class="forgot-modal">
@@ -143,7 +130,6 @@
       <button class="forgot-ok-btn" id="forgotOk" style="margin-top:12px;">我知道了</button>
     </div>
   </div>
-
   <!-- 修改密码弹窗 -->
   <div class="changepwd-overlay" id="changePwdOverlay">
     <div class="changepwd-modal">
@@ -159,7 +145,6 @@
       </form>
     </div>
   </div>
-
   <!-- 会员限制弹窗 -->
   <div class="member-overlay" id="memberOverlay">
     <div class="member-modal">
@@ -173,7 +158,6 @@
       </div>
     </div>
   </div>
-
   <!-- 会员开通弹窗 -->
   <div class="vip-overlay" id="vipOverlay">
     <div class="vip-modal">
@@ -194,7 +178,6 @@
       </div>
     </div>
   </div>
-
   <!-- 订单验证弹窗 -->
   <div class="order-overlay" id="orderOverlay">
     <div class="order-modal">
@@ -241,10 +224,8 @@
       </div>
     </div>
   </div>
-
   <!-- Toast -->
   <div class="toast-container" id="toastContainer"></div>
-
   <!-- Supabase SDK -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.0/dist/umd/supabase.min.js"></script>
   <script src="data.js"></script>
