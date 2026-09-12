@@ -68,7 +68,6 @@ function showToast(msg, type = 'info') {
     return;
   }
   
-  // 移除旧的同类型toast（避免堆积）
   const existingToasts = container.querySelectorAll('.toast');
   if (existingToasts.length > 5) {
     existingToasts[0].remove();
@@ -79,13 +78,11 @@ function showToast(msg, type = 'info') {
   toast.textContent = msg;
   container.appendChild(toast);
   
-  // 触发进入动画
   setTimeout(() => {
     toast.style.opacity = '1';
     toast.style.transform = 'translateX(0)';
   }, 10);
   
-  // 自动移除
   setTimeout(() => {
     toast.style.opacity = '0';
     toast.style.transform = 'translateX(50px)';
@@ -94,11 +91,10 @@ function showToast(msg, type = 'info') {
     }, 300);
   }, 3000);
 }
-// ===== 抖动动画（让表单震动提示） =====
+// ===== 抖动动画 =====
 function shakeForm(formElement) {
   if (!formElement) return;
   formElement.style.animation = 'none';
-  // 强制重排
   void formElement.offsetHeight;
   formElement.style.animation = 'shake 0.5s ease';
   setTimeout(() => {
@@ -165,10 +161,8 @@ function setupPasswordStrength(inputId, indicatorId, strengthId) {
   input.addEventListener('input', function() {
     const val = this.value;
     if (!val) { container.style.display = 'none'; return; }
-    
     container.style.display = 'block';
     const strength = getPasswordStrength(val);
-    
     if (strength <= 1) {
       indicator.textContent = '弱 (建议包含字母和数字)';
       indicator.style.color = '#ef4444';
@@ -183,10 +177,10 @@ function setupPasswordStrength(inputId, indicatorId, strengthId) {
 }
 // ===== 非会员下载限制检查 =====
 function checkDownloadAccess(gameId) {
-  if(!currentUser){ 
-    showToast('⚠️ 请先登录后再下载', 'warning'); 
-    openAuth(); 
-    return false; 
+  if(!currentUser){
+    showToast('⚠️ 请先登录后再下载', 'warning');
+    openAuth();
+    return false;
   }
   if(currentUserProfile?.is_member) return true;
   const today = getTodayDateStr();
@@ -210,13 +204,12 @@ function checkDownloadAccess(gameId) {
 }
 // ===== 认证 =====
 async function checkAuthStatus() {
-  if (!supabaseClient) { 
-    currentUser = null; 
-    currentUserProfile = null; 
-    updateAuthUI(); 
-    return; 
+  if (!supabaseClient) {
+    currentUser = null;
+    currentUserProfile = null;
+    updateAuthUI();
+    return;
   }
-  
   try {
     const { data: { session }, error } = await supabaseClient.auth.getSession();
     if (error) { throw error; }
@@ -239,17 +232,11 @@ async function fetchUserProfile() {
     else currentUserProfile = { is_member: false };
   } catch(e) { currentUserProfile = { is_member: false }; }
 }
-// ============================================================
-// ===== 登录（完整错误处理 + Toast 提示） =====
-// ============================================================
 async function handleLogin(e) {
   e.preventDefault();
-  
   const form = e.target;
   const email = document.getElementById('loginEmail').value.trim();
   const password = document.getElementById('loginPassword').value.trim();
-  
-  // ===== 前端验证（每个错误都有 Toast 提示） =====
   if (!email) {
     showToast('❌ 请输入电子邮箱', 'error');
     shakeForm(form);
@@ -265,53 +252,34 @@ async function handleLogin(e) {
     shakeForm(form);
     return;
   }
-  
   if (!supabaseClient) {
     showToast('❌ 系统离线，请稍后再试', 'error');
     return;
   }
-  
   const submitBtn = document.getElementById('loginSubmit');
   const origText = submitBtn.textContent;
   submitBtn.disabled = true;
   submitBtn.textContent = '登录中...';
-  
   try {
-    const { data, error } = await supabaseClient.auth.signInWithPassword({ 
-      email: email, 
-      password: password 
-    });
-    
+    const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
     if (error) {
-      // ===== 详细的错误分类（每个都有 Toast 提示） =====
       const errorMsg = error.message;
       console.log('登录错误:', errorMsg);
-      
-      if (errorMsg.includes('Invalid login credentials')) {
-        showToast('❌ 邮箱或密码错误，请重新输入', 'error');
-      } else if (errorMsg.includes('Email not confirmed')) {
-        showToast('⚠️ 请先验证您的邮箱，查收验证邮件', 'warning');
-      } else if (errorMsg.includes('Too many requests')) {
-        showToast('⚠️ 请求过于频繁，请稍后再试', 'warning');
-      } else if (errorMsg.includes('Invalid email')) {
-        showToast('❌ 邮箱格式不正确，请输入有效的邮箱地址', 'error');
-      } else if (errorMsg.includes('not found')) {
-        showToast('❌ 该邮箱未注册，请先注册', 'error');
-      } else {
-        showToast('❌ 登录失败：' + errorMsg, 'error');
-      }
+      if (errorMsg.includes('Invalid login credentials')) showToast('❌ 邮箱或密码错误，请重新输入', 'error');
+      else if (errorMsg.includes('Email not confirmed')) showToast('⚠️ 请先验证您的邮箱，查收验证邮件', 'warning');
+      else if (errorMsg.includes('Too many requests')) showToast('⚠️ 请求过于频繁，请稍后再试', 'warning');
+      else if (errorMsg.includes('Invalid email')) showToast('❌ 邮箱格式不正确，请输入有效的邮箱地址', 'error');
+      else if (errorMsg.includes('not found')) showToast('❌ 该邮箱未注册，请先注册', 'error');
+      else showToast('❌ 登录失败：' + errorMsg, 'error');
       shakeForm(form);
       return;
     }
-    
-    // ===== 登录成功 =====
     currentUser = data.user;
     await fetchUserProfile();
     updateAuthUI();
     closeAuth();
     document.getElementById('loginForm').reset();
     showToast('🎉 登录成功！欢迎回来', 'success');
-    
   } catch(err) {
     console.error('登录异常:', err);
     showToast('❌ 网络异常，请检查连接后重试', 'error');
@@ -321,18 +289,12 @@ async function handleLogin(e) {
     submitBtn.textContent = origText;
   }
 }
-// ============================================================
-// ===== 注册（完整错误处理 + Toast 提示） =====
-// ============================================================
 async function handleRegister(e) {
   e.preventDefault();
-  
   const form = e.target;
   const email = document.getElementById('registerEmail').value.trim().toLowerCase();
   const password = document.getElementById('registerPassword').value;
   const confirm = document.getElementById('registerConfirm').value;
-  
-  // ===== 前端验证（每个错误都有 Toast 提示） =====
   if (!email) {
     showToast('❌ 请输入电子邮箱', 'error');
     shakeForm(form);
@@ -368,68 +330,46 @@ async function handleRegister(e) {
     shakeForm(form);
     return;
   }
-  
   if (!supabaseClient) {
     showToast('❌ 系统离线，请稍后再试', 'error');
     return;
   }
-  
   const submitBtn = document.getElementById('registerSubmit');
   const origText = submitBtn.textContent;
   submitBtn.disabled = true;
   submitBtn.textContent = '注册中...';
-  
   try {
-    const { data, error } = await supabaseClient.auth.signUp({ 
-      email: email, 
-      password: password,
-      options: {
-        emailRedirectTo: window.location.origin
-      }
+    const { data, error } = await supabaseClient.auth.signUp({
+      email,
+      password,
+      options: { emailRedirectTo: window.location.origin }
     });
-    
     if (error) {
-      // ===== 详细的错误分类（每个都有 Toast 提示） =====
       const errorMsg = error.message;
       console.log('注册错误:', errorMsg);
-      
-      if (errorMsg.includes('already registered')) {
-        showToast('⚠️ 该邮箱已被注册，请直接登录', 'warning');
-        switchToLoginView();
-      } else if (errorMsg.includes('Password should be at least')) {
-        showToast('❌ 密码至少需要 6 个字符', 'error');
-      } else if (errorMsg.includes('Invalid email')) {
-        showToast('❌ 邮箱格式不正确，请输入有效的邮箱地址', 'error');
-      } else if (errorMsg.includes('rate limit')) {
-        showToast('⚠️ 操作过于频繁，请稍后再试', 'warning');
-      } else if (errorMsg.includes('email')) {
-        showToast('❌ 请输入有效的邮箱地址', 'error');
-      } else {
-        showToast('❌ 注册失败：' + errorMsg, 'error');
-      }
+      if (errorMsg.includes('already registered')) { showToast('⚠️ 该邮箱已被注册，请直接登录', 'warning'); switchToLoginView(); }
+      else if (errorMsg.includes('Password should be at least')) showToast('❌ 密码至少需要 6 个字符', 'error');
+      else if (errorMsg.includes('Invalid email')) showToast('❌ 邮箱格式不正确，请输入有效的邮箱地址', 'error');
+      else if (errorMsg.includes('rate limit')) showToast('⚠️ 操作过于频繁，请稍后再试', 'warning');
+      else if (errorMsg.includes('email')) showToast('❌ 请输入有效的邮箱地址', 'error');
+      else showToast('❌ 注册失败：' + errorMsg, 'error');
       shakeForm(form);
       return;
     }
-    
-    // ===== 检查是否已有账号 =====
     if (data.user && data.user.identities && data.user.identities.length === 0) {
       showToast('⚠️ 该邮箱已被注册，请直接登录', 'warning');
       switchToLoginView();
       return;
     }
-    
-    // ===== 注册成功 =====
     if (data.user && data.user.confirmed_at === null) {
       showToast('📧 验证邮件已发送，请查收邮箱完成验证', 'success');
     } else {
       showToast('🎉 注册成功！请登录', 'success');
     }
-    
     document.getElementById('registerForm').reset();
     document.getElementById('registerConfirm').value = '';
     document.getElementById('passwordStrength').style.display = 'none';
     switchToLoginView();
-    
   } catch(err) {
     console.error('注册异常:', err);
     showToast('❌ 网络异常，请检查连接后重试', 'error');
@@ -439,15 +379,10 @@ async function handleRegister(e) {
     submitBtn.textContent = origText;
   }
 }
-// ============================================================
-// ===== 忘记密码（完整错误处理 + Toast 提示） =====
-// ============================================================
 async function handleForgotPassword(e) {
   e.preventDefault();
-  
   const form = e.target;
   const email = document.getElementById('forgotEmail').value.trim();
-  
   if (!email) {
     showToast('❌ 请输入您的邮箱地址', 'error');
     shakeForm(form);
@@ -462,34 +397,24 @@ async function handleForgotPassword(e) {
     showToast('❌ 系统离线，请稍后再试', 'error');
     return;
   }
-  
   const submitBtn = document.getElementById('forgotSubmit');
   const origText = submitBtn.textContent;
   submitBtn.disabled = true;
   submitBtn.textContent = '发送中...';
-  
   try {
     const { error } = await supabaseClient.auth.resetPasswordForEmail(email, {
       redirectTo: window.location.origin + '/reset-password'
     });
-    
     if (error) {
       const errorMsg = error.message;
       console.log('忘记密码错误:', errorMsg);
-      
-      if (errorMsg.includes('not found')) {
-        showToast('⚠️ 该邮箱未注册，请先注册', 'warning');
-      } else if (errorMsg.includes('rate limit')) {
-        showToast('⚠️ 操作过于频繁，请稍后再试', 'warning');
-      } else if (errorMsg.includes('Invalid email')) {
-        showToast('❌ 邮箱格式不正确，请输入有效的邮箱地址', 'error');
-      } else {
-        showToast('❌ 发送失败：' + errorMsg, 'error');
-      }
+      if (errorMsg.includes('not found')) showToast('⚠️ 该邮箱未注册，请先注册', 'warning');
+      else if (errorMsg.includes('rate limit')) showToast('⚠️ 操作过于频繁，请稍后再试', 'warning');
+      else if (errorMsg.includes('Invalid email')) showToast('❌ 邮箱格式不正确，请输入有效的邮箱地址', 'error');
+      else showToast('❌ 发送失败：' + errorMsg, 'error');
       shakeForm(form);
       return;
     }
-    
     showToast('📧 重置邮件已发送，请查收邮箱', 'success');
     document.getElementById('forgotForm').reset();
     closeForgot();
@@ -501,16 +426,11 @@ async function handleForgotPassword(e) {
     submitBtn.textContent = origText;
   }
 }
-// ============================================================
-// ===== 修改密码（完整错误处理 + Toast 提示） =====
-// ============================================================
 async function handleChangePassword(e) {
   e.preventDefault();
-  
   const form = e.target;
   const newPwd = document.getElementById('newPassword').value;
   const confirmPwd = document.getElementById('confirmNewPassword').value;
-  
   if (!newPwd) {
     showToast('❌ 请设置新密码', 'error');
     shakeForm(form);
@@ -531,35 +451,25 @@ async function handleChangePassword(e) {
     shakeForm(form);
     return;
   }
-  
   if (!supabaseClient) {
     showToast('❌ 系统离线，请稍后再试', 'error');
     return;
   }
-  
   const submitBtn = document.getElementById('changePwdSubmit');
   const origText = submitBtn.textContent;
   submitBtn.disabled = true;
   submitBtn.textContent = '修改中...';
-  
   try {
     const { error } = await supabaseClient.auth.updateUser({ password: newPwd });
-    
     if (error) {
       const errorMsg = error.message;
       console.log('修改密码错误:', errorMsg);
-      
-      if (errorMsg.includes('same as the old password')) {
-        showToast('⚠️ 新密码不能与旧密码相同', 'warning');
-      } else if (errorMsg.includes('Password should be at least')) {
-        showToast('❌ 密码至少需要 6 个字符', 'error');
-      } else {
-        showToast('❌ 修改失败：' + errorMsg, 'error');
-      }
+      if (errorMsg.includes('same as the old password')) showToast('⚠️ 新密码不能与旧密码相同', 'warning');
+      else if (errorMsg.includes('Password should be at least')) showToast('❌ 密码至少需要 6 个字符', 'error');
+      else showToast('❌ 修改失败：' + errorMsg, 'error');
       shakeForm(form);
       return;
     }
-    
     showToast('✅ 密码修改成功', 'success');
     closeChangePwd();
     document.getElementById('changePwdForm').reset();
@@ -572,15 +482,13 @@ async function handleChangePassword(e) {
     submitBtn.textContent = origText;
   }
 }
-// ===== 登出 =====
 async function handleLogout() {
   if (supabaseClient) await supabaseClient.auth.signOut();
-  currentUser = null; 
+  currentUser = null;
   currentUserProfile = null;
   updateAuthUI();
   showToast('👋 已退出登录', 'info');
 }
-// ===== 订单 =====
 function updateOrderDots() {
   const input = document.getElementById('orderNumber');
   const len = input.value.length;
@@ -594,29 +502,28 @@ function updateOrderDots() {
 }
 async function submitOrder() {
   const orderNo = document.getElementById('orderNumber').value;
-  if(orderNo.length !== 32){ 
-    showToast('❌ 订单号必须是32位', 'error'); 
-    return; 
+  if(orderNo.length !== 32){
+    showToast('❌ 订单号必须是32位', 'error');
+    return;
   }
-  if(!supabaseClient || !currentUser){ 
-    showToast('❌ 系统错误', 'error'); 
-    return; 
+  if(!supabaseClient || !currentUser){
+    showToast('❌ 系统错误', 'error');
+    return;
   }
   try {
-    const { error } = await supabaseClient.from('GameTogether').update({ 
-      is_member: true, 
-      order_id: orderNo 
+    const { error } = await supabaseClient.from('GameTogether').update({
+      is_member: true,
+      order_id: orderNo
     }).eq('id', currentUser.id);
     if (error) throw error;
     currentUserProfile.is_member = true;
     showToast('🎉 会员开通成功！', 'success');
     closeOrderModal();
     updateAuthUI();
-  } catch(e) { 
-    showToast('❌ 验证失败: ' + e.message, 'error'); 
+  } catch(e) {
+    showToast('❌ 验证失败: ' + e.message, 'error');
   }
 }
-// ===== UI =====
 function updateAuthUI() {
   const section = document.getElementById('auth-section');
   if (currentUser) {
@@ -644,18 +551,31 @@ function updateAuthUI() {
     document.getElementById('login-btn').addEventListener('click', openAuth);
   }
 }
-// ===== 渲染 =====
 function renderTags() {
   tagsContainer.innerHTML = gameTypes.map(type => `
     <div class="tag ${type.id==='all'?'active':''}" data-type="${type.id}">${type.label}</div>
   `).join('');
 }
 function getFilteredGames() {
-  let filtered = [...gamesData];
+  let filtered = [];
+  if(Array.isArray(gamesData)){
+    for(const g of gamesData){
+      try{
+        if(!g || !g.id) continue;
+        filtered.push(g);
+      }catch(e){
+        console.warn('跳过异常游戏条目',e);
+      }
+    }
+  }
   if(currentFilter!=='all') filtered = filtered.filter(g=>g.type===currentFilter);
   if(currentSearch.trim()){
     const s = currentSearch.toLowerCase();
-    filtered = filtered.filter(g=>g.name.toLowerCase().includes(s)||g.nameEn.toLowerCase().includes(s));
+    filtered = filtered.filter(g=>{
+      const n1 = (g.name||'').toLowerCase();
+      const n2 = (g.nameEn||'').toLowerCase();
+      return n1.includes(s)||n2.includes(s);
+    });
   }
   return filtered;
 }
@@ -664,9 +584,7 @@ function renderPage() {
   const totalPages = Math.ceil(filtered.length / gamesPerPage);
   if(currentPage > totalPages) currentPage = Math.max(1, totalPages);
   const start = (currentPage - 1) * gamesPerPage;
-  // 关键改动：拷贝数组再反转，不修改源数据
   const pageGames = [...filtered].reverse().slice(start, start + gamesPerPage);
-  
   totalCount.textContent = `共 ${filtered.length} 款`;
   if(pageGames.length === 0) {
     gamesGrid.innerHTML = '';
@@ -676,29 +594,33 @@ function renderPage() {
     gamesGrid.innerHTML = pageGames.map((game, i) => `
       <div class="game-card" data-id="${game.id}" style="animation-delay:${i*0.03}s">
         <div class="card-cover-wrap">
-          <img class="card-cover" src="${game.cover}" alt="${game.name}" loading="lazy">
-          <div class="card-banner">${game.typeLabel}</div>
+          <img class="card-cover" src="${game.cover||''}" alt="${(game.name||'')}" loading="lazy">
+          <div class="card-banner">${game.typeLabel||''}</div>
         </div>
         <div class="card-info">
-          <div class="card-name">${game.name}</div>
-          <div class="card-name-en">${game.nameEn}</div>
+          <div class="card-name">${game.name||''}</div>
+          <div class="card-name-en">${game.nameEn||''}</div>
         </div>
       </div>
     `).join('');
     document.querySelectorAll('.game-card').forEach(card => {
       card.addEventListener('click', () => {
-        const game = gamesData.find(g=>g.id===parseInt(card.dataset.id));
-        if(game) {
-          if(checkDownloadAccess(game.id)) {
-            openModal(game, card);
+        try{
+          const gid = parseInt(card.dataset.id);
+          const game = gamesData.find(g=>g && g.id===gid);
+          if(game) {
+            if(checkDownloadAccess(game.id)) {
+              openModal(game, card);
+            }
           }
+        }catch(e){
+          console.error('卡片点击异常',e);
         }
       });
     });
   }
   renderPagination(totalPages);
 }
-
 function renderPagination(totalPages) {
   if(totalPages <= 1) { pagination.innerHTML = ''; return; }
   let html = `<button class="page-btn" data-page="prev" ${currentPage===1?'disabled':''}>◀</button>`;
@@ -722,37 +644,57 @@ function renderPagination(totalPages) {
     });
   });
 }
-// ===== 详情弹窗 =====
 function getCardOrigin(card) {
   const rect = card.getBoundingClientRect();
   return { x: rect.left+rect.width/2-innerWidth/2, y: rect.top+rect.height/2-innerHeight/2 };
 }
+
+// ========== 重写openModal：动态生成多个下载按钮，支持同时显示迅雷+夸克 ==========
 function openModal(game, card) {
   lastClickedCard = card;
-  document.getElementById('modalCover').src = game.cover;
-  document.getElementById('modalTitle').textContent = game.name;
-  document.getElementById('modalTitleEn').textContent = game.nameEn;
-  document.getElementById('modalTypeBadge').textContent = game.typeLabel;
-  document.getElementById('modalDesc').textContent = game.description;
+  document.getElementById('modalCover').src = game.cover || '';
+  document.getElementById('modalTitle').textContent = game.name || '';
+  document.getElementById('modalTitleEn').textContent = game.nameEn || '';
+  document.getElementById('modalTypeBadge').textContent = game.typeLabel || '';
+  document.getElementById('modalDesc').textContent = game.description || '';
+
   const row = document.getElementById('modalScreenshots');
-  row.innerHTML = game.screenshots.map((src,i)=>`
+  const shotList = Array.isArray(game.screenshots) ? game.screenshots : [];
+  row.innerHTML = shotList.map((src,i)=>`
     <div class="screenshot-thumb" data-src="${src}" data-index="${i}" data-game-id="${game.id}">
       <img src="${src}" alt="截图${i+1}" loading="lazy">
     </div>
   `).join('');
   row.scrollLeft = 0;
 
-  // ========== 修改点：自动识别迅雷/夸克链接，修改下载按钮 ==========
-  const downloadLinkEl = document.getElementById('downloadLink');
-  if(game.thunderLink){
-    downloadLinkEl.href = game.thunderLink;
-    downloadLinkEl.innerHTML = `<span>☁️</span><span>迅雷网盘下载</span>`;
-  }else if(game.quarkLink){
-    downloadLinkEl.href = game.quarkLink;
-    downloadLinkEl.innerHTML = `<span>☁️</span><span>夸克网盘下载</span>`;
-  }else{
-    downloadLinkEl.href = "#";
-    downloadLinkEl.innerHTML = `<span>⚠️</span><span>暂无下载链接</span>`;
+  const modalActionsWrap = document.querySelector('.modal-actions');
+  modalActionsWrap.innerHTML = '';
+
+  const hasQuark = !!(game.quarkLink && game.quarkLink.trim());
+  const hasThunder = !!(game.thunderLink && game.thunderLink.trim());
+
+  if (hasThunder) {
+    const btnThunder = document.createElement('a');
+    btnThunder.className = 'btn btn-primary';
+    btnThunder.target = '_blank';
+    btnThunder.href = game.thunderLink.trim();
+    btnThunder.innerHTML = `<span>☁️</span><span>迅雷网盘下载</span>`;
+    modalActionsWrap.appendChild(btnThunder);
+  }
+  if (hasQuark) {
+    const btnQuark = document.createElement('a');
+    btnQuark.className = 'btn btn-primary';
+    btnQuark.target = '_blank';
+    btnQuark.href = game.quarkLink.trim();
+    btnQuark.innerHTML = `<span>☁️</span><span>夸克网盘下载</span>`;
+    modalActionsWrap.appendChild(btnQuark);
+  }
+  if (!hasQuark && !hasThunder) {
+    const tipSpan = document.createElement('span');
+    tipSpan.className = 'btn btn-primary';
+    tipSpan.style.pointerEvents = 'none';
+    tipSpan.innerHTML = `<span>⚠️</span><span>暂无下载链接</span>`;
+    modalActionsWrap.appendChild(tipSpan);
   }
 
   modalOverlay.classList.add('active');
@@ -766,6 +708,7 @@ function openModal(game, card) {
   ];
   modalContent.animate(keyframes, { duration:600, easing:'cubic-bezier(0.22,0.61,0.36,1)', fill:'forwards' });
 }
+
 function closeModal() {
   let origin = { x:0, y:0 };
   if(lastClickedCard) origin = getCardOrigin(lastClickedCard);
@@ -777,24 +720,22 @@ function closeModal() {
   const anim = modalContent.animate(keyframes, { duration:450, easing:'cubic-bezier(0.55,0.06,0.68,0.19)', fill:'forwards' });
   anim.onfinish = () => { modalOverlay.classList.remove('active'); document.body.style.overflow=''; };
 }
-// ===== 输入框实时验证 =====
+
 function setupInputValidation() {
   document.querySelectorAll('.auth-input').forEach(input => {
     input.addEventListener('input', function() {
       this.classList.remove('error', 'success');
     });
-    
     input.addEventListener('blur', function() {
-      if (this.id === 'loginEmail' || this.id === 'registerEmail' || this.id === 'forgotEmail') {
-        const val = this.value.trim();
-        if (val && !isValidEmail(val)) {
+      const val = this.value.trim();
+      if ((this.id === 'loginEmail' || this.id === 'registerEmail' || this.id === 'forgotEmail') && val) {
+        if (!isValidEmail(val)) {
           showToast('⚠️ 请输入有效的邮箱地址', 'warning');
           this.classList.add('error');
-        } else if (val && isValidEmail(val)) {
+        } else {
           this.classList.add('success');
         }
       }
-      
       if (this.id === 'registerConfirm') {
         const pwd = document.getElementById('registerPassword').value;
         if (this.value && this.value !== pwd) {
@@ -804,7 +745,6 @@ function setupInputValidation() {
           this.classList.add('success');
         }
       }
-      
       if (this.id === 'confirmNewPassword') {
         const pwd = document.getElementById('newPassword').value;
         if (this.value && this.value !== pwd) {
@@ -817,7 +757,7 @@ function setupInputValidation() {
     });
   });
 }
-// ===== 事件 =====
+
 function setupEvents() {
   tagsContainer.addEventListener('click', e => {
     const tag = e.target.closest('.tag'); if(!tag) return;
@@ -831,12 +771,12 @@ function setupEvents() {
   document.addEventListener('keydown', e=>{ if(e.key==='Escape' && modalOverlay.classList.contains('active')) closeModal(); });
   document.getElementById('sliderPrev').addEventListener('click', ()=>{ document.getElementById('modalScreenshots').scrollBy({left:-185,behavior:'smooth'}); });
   document.getElementById('sliderNext').addEventListener('click', ()=>{ document.getElementById('modalScreenshots').scrollBy({left:185,behavior:'smooth'}); });
-  // 截图放大
+
   document.addEventListener('click', e => {
     const thumb = e.target.closest('.screenshot-thumb'); if(!thumb) return;
     const gameId = parseInt(thumb.dataset.gameId), idx = parseInt(thumb.dataset.index);
-    const game = gamesData.find(g=>g.id===gameId); if(!game) return;
-    const screenshots = game.screenshots;
+    const game = gamesData.find(g=>g && g.id===gameId); if(!game) return;
+    const screenshots = Array.isArray(game.screenshots) ? game.screenshots : [];
     let zoomIdx = idx;
     const overlay = document.createElement('div'); overlay.className='img-zoom-overlay';
     const closeBtn = document.createElement('button'); closeBtn.className='zoom-close-btn'; closeBtn.innerHTML='✕';
@@ -862,7 +802,7 @@ function setupEvents() {
     }
     overlay.addEventListener('click', ev=>{ if(ev.target===overlay) closeZoom(); });
   });
-  // ===== 登录弹窗事件 =====
+
   document.getElementById('authClose').addEventListener('click', closeAuth);
   authOverlay.addEventListener('click', e=>{ if(e.target===authOverlay) closeAuth(); });
   document.getElementById('tabLogin').addEventListener('click', switchToLoginView);
@@ -871,7 +811,7 @@ function setupEvents() {
   document.getElementById('switchToLogin').addEventListener('click', switchToLoginView);
   document.getElementById('loginForm').addEventListener('submit', handleLogin);
   document.getElementById('registerForm').addEventListener('submit', handleRegister);
-  // ===== 忘记密码事件 =====
+
   document.getElementById('forgotPasswordLink').addEventListener('click', e => {
     e.preventDefault();
     if (currentUser) {
@@ -886,27 +826,27 @@ function setupEvents() {
   document.getElementById('forgotClose').addEventListener('click', closeForgot);
   document.getElementById('forgotOk').addEventListener('click', closeForgot);
   forgotOverlay.addEventListener('click', e=>{ if(e.target===forgotOverlay) closeForgot(); });
-  document.getElementById('copyWechat').addEventListener('click', ()=>{ 
+  document.getElementById('copyWechat').addEventListener('click', ()=>{
     navigator.clipboard.writeText('GameTogether1').then(()=>{
       showToast('✅ 已复制微信号', 'success');
     }).catch(()=>{
       showToast('✅ 微信号: GameTogether1', 'success');
     });
   });
-  // ===== 修改密码事件 =====
+
   document.getElementById('changePwdClose').addEventListener('click', closeChangePwd);
   changePwdOverlay.addEventListener('click', e=>{ if(e.target===changePwdOverlay) closeChangePwd(); });
   document.getElementById('changePwdForm').addEventListener('submit', handleChangePassword);
-  // ===== 会员弹窗事件 =====
+
   document.getElementById('memberClose').addEventListener('click', closeMemberModal);
   memberOverlay.addEventListener('click', e=>{ if(e.target===memberOverlay) closeMemberModal(); });
   document.getElementById('gotoVipBtn').addEventListener('click', openVIPModal);
   document.getElementById('cancelMemberBtn').addEventListener('click', closeMemberModal);
-  // ===== VIP开通事件 =====
+
   document.getElementById('vipClose').addEventListener('click', closeVIPModal);
   vipOverlay.addEventListener('click', e=>{ if(e.target===vipOverlay) closeVIPModal(); });
   document.getElementById('paidBtn').addEventListener('click', openOrderModal);
-  // ===== 订单事件 =====
+
   document.getElementById('cancelOrder').addEventListener('click', closeOrderModal);
   const orderInput = document.getElementById('orderNumber');
   orderInput.addEventListener('input', () => {
@@ -914,24 +854,23 @@ function setupEvents() {
     updateOrderDots();
   });
   document.getElementById('submitOrder').addEventListener('click', submitOrder);
-  // ===== 输入验证 =====
+
   setupInputValidation();
-  
-  // ===== 密码强度 =====
   setupPasswordStrength('registerPassword', 'passwordStrength', 'strengthIndicator');
   setupPasswordStrength('newPassword', 'changePwdStrength', 'changeStrengthIndicator');
 }
-// ===== 启动 =====
+
 async function init() {
-  resizeParticles(); 
-  initParticles(); 
+  resizeParticles();
+  initParticles();
   animId = requestAnimationFrame(animateParticles);
   await checkAuthStatus();
-  renderTags(); 
-  renderPage(); 
+  renderTags();
+  renderPage();
   setupEvents();
   console.log('✅ 网站初始化完成');
 }
+
 window.addEventListener('resize', ()=>{ resizeParticles(); initParticles(); });
 document.addEventListener('mousemove', e=>{ mouseX=e.clientX; mouseY=e.clientY; });
 document.addEventListener('mouseleave', ()=>{ mouseX=-1000; mouseY=-1000; });
