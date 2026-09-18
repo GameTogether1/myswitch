@@ -3,8 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>一块Switch 游戏库</title>
+  <title>Switch 游戏库 · 红蓝配色</title>
   <link rel="stylesheet" href="style.css">
+  <style>
+    .hidden { display: none !important; }
+  </style>
 </head>
 <body>
   <div class="bg-joycon">
@@ -151,7 +154,7 @@
       <button class="member-close" id="memberClose">✕</button>
       <div class="member-icon">📥</div>
       <h2 class="member-title">今日下载次数已用完</h2>
-      <p class="member-desc">非会员每天仅可下载 1 个游戏<br>开通会员后全站资源无限下载</p>
+      <p class="member-desc">非会员每天仅可获取1个游戏链接<br />（当日已获取的游戏可重复获取）</p>
       <div class="member-actions">
         <button class="member-vip-btn" id="gotoVipBtn">👑 开通会员</button>
         <button class="member-cancel-btn" id="cancelMemberBtn">暂不开通</button>
@@ -224,10 +227,25 @@
       </div>
     </div>
   </div>
+
+  <!-- ==========夸克二维码弹窗【BODY直接子元素，最高层级，不嵌套任何容器】========== -->
+  <div class="quark-qrcode-modal hidden" id="quarkQrcodeModal">
+    <div class="quark-modal-overlay">
+      <div class="quark-modal">
+        <h3 class="quark-modal-title">手机扫码保存资源</h3>
+        <p class="quark-modal-subtitle">建议先在夸克网盘 App 内保存资源，再在电脑端下载。</p>
+        <div class="quark-qr-wrap">
+          <canvas id="quark-qrcode-canvas"></canvas>
+        </div>
+        <button id="quark-modal-close-btn">关闭</button>
+      </div>
+    </div>
+  </div>
   <!-- Toast -->
   <div class="toast-container" id="toastContainer"></div>
   <!-- Supabase SDK -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.0/dist/umd/supabase.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js"></script>
   <script src="data.js"></script>
   <script src="script.js"></script>
 </body>
