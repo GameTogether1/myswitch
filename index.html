@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>一块游戏 · Switch 掌机</title>
+  <link rel="icon" type="image/png" href="favicon.png">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="bg-joycon">
+    <div class="joycon-glow joycon-red"></div>
+    <div class="joycon-glow joycon-blue"></div>
+    <div class="joycon-glow joycon-white"></div>
+  </div>
+  <canvas id="particleCanvas"></canvas>
+  <!-- 导航栏 -->
+  <nav class="navbar">
+    <div class="nav-inner">
+      <div class="nav-logo">
+        <span class="logo-joycon joycon-red-text">一块</span>
+        <span class="logo-joycon joycon-blue-text">SWITCH</span>
+      </div>
+      <div id="auth-section">
+        <button id="login-btn" class="nav-login-btn">登录</button>
+      </div>
+    </div>
+  </nav>
+  <header class="header">
+    <h1 class="header-title">精选任天堂 Switch 游戏资源</h1>
+    <p class="header-sub">探索 · 下载 · 畅玩</p>
+    <div class="search-wrap">
+      <div class="search-box">
+        <input type="text" class="search-input" id="searchInput" placeholder="搜索游戏名称..." autocomplete="off">
+        <button class="search-btn" id="searchBtn">搜索</button>
+      </div>
+    </div>
+  </header>
+  <div class="tags-wrap" id="tagsContainer"></div>
+  <section class="games-section">
+    <div class="section-info">
+      <span class="section-label">游戏列表</span>
+      <span class="section-count" id="totalCount">共 0 款</span>
+    </div>
+    <div class="games-grid" id="gamesGrid"></div>
+    <div class="empty-state" id="emptyState" style="display:none;">
+      <div class="empty-state-icon">∅</div>
+      <div class="empty-state-text">未找到相关游戏</div>
+    </div>
+  </section>
+  <!-- 分页 -->
+  <div class="pagination" id="pagination"></div>
+  <!-- 详情弹窗 -->
+  <div class="modal-overlay" id="modalOverlay">
+    <div class="modal-content" id="modalContent">
+      <button class="modal-close" id="modalClose">✕</button>
+      <div class="modal-left">
+        <img class="modal-cover" id="modalCover" src="" alt="">
+        <div class="modal-left-overlay"></div>
+      </div>
+      <div class="modal-right">
+        <div class="modal-header-info">
+          <h2 class="modal-title" id="modalTitle"></h2>
+          <p class="modal-title-en" id="modalTitleEn"></p>
+        </div>
+        <div class="modal-type-badge" id="modalTypeBadge"></div>
+        <div class="modal-desc" id="modalDesc"></div>
+        <div class="modal-screenshots">
+          <div class="screenshots-label">游戏截图</div>
+          <div class="screenshots-slider-wrap">
+            <button class="slider-btn slider-prev" id="sliderPrev">◀</button>
+            <div class="screenshots-row" id="modalScreenshots"></div>
+            <button class="slider-btn slider-next" id="sliderNext">▶</button>
+          </div>
+        </div>
+        <div class="modal-actions">
+          <!-- 下载按钮由JS动态生成，此处清空 -->
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- 登录弹窗 -->
+  <div class="auth-overlay" id="authOverlay">
+    <div class="auth-modal" id="authModal">
+      <button class="auth-close" id="authClose">✕</button>
+      <div class="auth-tabs">
+        <button class="auth-tab active" id="tabLogin">登录</button>
+        <button class="auth-tab" id="tabRegister">注册</button>
+      </div>
+      <form id="loginForm" class="auth-form">
+        <input type="email" id="loginEmail" name="email" autocomplete="username" placeholder="电子邮箱" class="auth-input" required>
+        <input type="password" id="loginPassword" name="password" autocomplete="current-password" placeholder="密码" class="auth-input" required>
+        <div class="auth-forgot">
+          <a href="#" id="forgotPasswordLink">忘记密码？</a>
+        </div>
+        <button type="submit" class="auth-submit" id="loginSubmit">登录</button>
+        <p class="auth-switch">还没有账号？<span id="switchToRegister">立即注册</span></p>
+      </form>
+      <form id="registerForm" class="auth-form" style="display:none;">
+        <input type="email" id="registerEmail" name="email" autocomplete="email" placeholder="电子邮箱" class="auth-input" required>
+        <input type="password" id="registerPassword" name="new-password" autocomplete="new-password" placeholder="密码（至少6位）" class="auth-input" required>
+        <div id="passwordStrength" style="display:none;font-size:0.8rem;text-align:left;padding:0 4px;margin-top:-8px;">
+          密码强度：<span id="strengthIndicator"></span>
+        </div>
+        <input type="password" id="registerConfirm" name="confirm-password" autocomplete="new-password" placeholder="确认密码" class="auth-input" required>
+        <button type="submit" class="auth-submit" id="registerSubmit">注册</button>
+        <p class="auth-switch">已有账号？<span id="switchToLogin">立即登录</span></p>
+      </form>
+    </div>
+  </div>
+  <!-- 忘记密码弹窗（邮箱验证码自助重置 + 微信兜底） -->
+  <div class="forgot-overlay" id="forgotOverlay">
+    <div class="forgot-modal">
+      <button class="forgot-close" id="forgotClose">✕</button>
+      <div class="forgot-icon">🔐</div>
+      <h2 class="forgot-title">找回密码</h2>
+      <p class="forgot-desc">输入注册邮箱获取验证码，直接在当前页面重置密码</p>
+      <form id="forgotStep1Form" style="display:flex;flex-direction:column;gap:12px;margin-bottom:18px;">
+        <input type="email" id="forgotEmail" placeholder="请输入注册时的电子邮箱" class="auth-input" required>
+        <button type="submit" class="auth-submit" id="forgotSendBtn">发送验证码</button>
+      </form>
+      <form id="forgotStep2Form" style="display:none;flex-direction:column;gap:10px;margin-bottom:18px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;font-size:0.8rem;color:#94a3b8;padding:0 2px;">
+          <span>已发至：<strong id="forgotEmailDisplay" style="color:#60a5fa;"></strong></span>
+          <button type="button" id="forgotResendBtn" style="background:none;border:none;color:#60a5fa;cursor:pointer;font-size:0.8rem;padding:0;">重新发送</button>
+        </div>
+        <input type="text" id="forgotCode" inputmode="numeric" autocomplete="one-time-code" placeholder="请输入邮件中的验证码" class="auth-input" style="letter-spacing:2px;font-family:monospace;" required>
+        <input type="password" id="forgotNewPwd" minlength="6" placeholder="设置新密码（至少6位）" class="auth-input" required>
+        <input type="password" id="forgotConfirmPwd" minlength="6" placeholder="确认新密码" class="auth-input" required>
+        <button type="submit" class="auth-submit" id="forgotVerifyBtn">验证并修改密码</button>
+        <button type="button" id="forgotBackBtn" style="background:none;border:none;color:#94a3b8;cursor:pointer;font-size:0.82rem;padding:4px;">更换邮箱</button>
+      </form>
+      <div class="forgot-card" style="margin-bottom:0;">
+        <p class="forgot-card-label">收不到邮件？联系管理员微信协助</p>
+        <div class="forgot-wechat-row">
+          <span class="forgot-wechat">GameTogether1</span>
+          <button type="button" class="forgot-copy-btn" id="copyWechat">复制</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- 修改密码弹窗 -->
+  <div class="changepwd-overlay" id="changePwdOverlay">
+    <div class="changepwd-modal">
+      <button class="changepwd-close" id="changePwdClose">✕</button>
+      <h2 class="changepwd-title">修改密码</h2>
+      <form id="changePwdForm">
+        <input type="password" id="newPassword" placeholder="新密码（至少6位）" class="auth-input" required>
+        <div id="changePwdStrength" style="display:none;font-size:0.8rem;text-align:left;padding:0 4px;margin-top:-8px;">
+          密码强度：<span id="changeStrengthIndicator"></span>
+        </div>
+        <input type="password" id="confirmNewPassword" placeholder="确认新密码" class="auth-input" required>
+        <button type="submit" class="auth-submit" id="changePwdSubmit">确认修改</button>
+      </form>
+    </div>
+  </div>
+  <!-- 会员限制弹窗 -->
+  <div class="member-overlay" id="memberOverlay">
+    <div class="member-modal">
+      <button class="member-close" id="memberClose">✕</button>
+      <div class="member-icon">📥</div>
+      <h2 class="member-title">今日下载次数已用完</h2>
+      <p class="member-desc">非会员每天仅可获取1个游戏链接<br />（当日已获取的游戏可重复获取）</p>
+      <div class="member-actions">
+        <button class="member-vip-btn" id="gotoVipBtn">👑 开通会员</button>
+        <button class="member-cancel-btn" id="cancelMemberBtn">暂不开通</button>
+      </div>
+    </div>
+  </div>
+  <!-- 会员开通弹窗 -->
+  <div class="vip-overlay" id="vipOverlay">
+    <div class="vip-modal">
+      <button class="vip-close" id="vipClose">✕</button>
+      <div class="vip-content">
+        <div class="vip-left">
+          <h2 class="vip-title">开通会员</h2>
+          <p class="vip-subtitle">打赏一次，终身免费！</p>
+          <p class="vip-subtitle">全站资源，无限下载！</p>
+          <div class="vip-qr-box">
+            <p class="vip-qr-label">微信扫码支付</p>
+          </div>
+          <button class="vip-paid-btn" id="paidBtn">我已支付</button>
+        </div>
+        <div class="vip-right">
+          <img src="https://pub-1f2ba50106ed4026bd217cd777924d22.r2.dev/QR.png" alt="收款码" class="vip-qr-img">
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- 订单验证弹窗 -->
+  <div class="order-overlay" id="orderOverlay">
+    <div class="order-modal">
+      <h2 class="order-title">输入微信支付订单号</h2>
+      <input type="text" id="orderNumber" maxlength="32" class="order-input" placeholder="请输入32位订单号" inputmode="numeric">
+      <div class="order-dots" id="orderDots"></div>
+      <p class="order-hint" id="orderLen">0/32</p>
+      <div class="order-actions">
+        <button class="order-cancel-btn" id="cancelOrder">返回</button>
+        <button class="order-submit-btn" id="submitOrder" disabled>提交</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==========夸克二维码弹窗【BODY直接子元素，最高层级，不嵌套任何容器】========== -->
+  <div class="quark-qrcode-modal hidden" id="quarkQrcodeModal">
+    <div class="quark-modal-overlay">
+      <div class="quark-modal">
+        <h3 class="quark-modal-title">手机扫码保存资源</h3>
+        <p class="quark-modal-subtitle">建议先在夸克网盘 App 内保存资源，再在电脑端下载。</p>
+        <div class="quark-qr-wrap">
+          <canvas id="quark-qrcode-canvas"></canvas>
+        </div>
+        <button id="quark-modal-close-btn">关闭</button>
+      </div>
+    </div>
+  </div>
+  <!-- Toast -->
+  <div class="toast-container" id="toastContainer"></div>
+  <!-- Supabase SDK -->
+  <script src="supabase.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js"></script>
+  <script src="script.js"></script>
+  <script src="site-switcher.js" data-current-site="myswitch"></script>
+</body>
+</html>
